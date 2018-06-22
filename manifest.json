@@ -3,13 +3,8 @@
     "version": "1.0",
     "description": "Restoran menüsünde eski siparişlerinizde hangi yemeğe kaç puan verdiğinizi gösterir.",
     "permissions": [
-        "cookies",
         "https://www.yemeksepeti.com/*"
     ],
-    "background": {
-        "scripts": ["background.js"],
-        "persistent": false
-    },
     "content_scripts": [
         {
             "matches": ["https://www.yemeksepeti.com/*"],
