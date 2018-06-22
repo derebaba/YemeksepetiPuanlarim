@@ -9,59 +9,79 @@ var foodLists = document.getElementsByClassName("listBody");
 	});
 });
 */
-var foods = document.getElementsByClassName("getProductDetail");
 
-[].forEach.call(foods, function(food) {
-	food.style.color = "green";
-});
-// info no-comment
-
-var xmlhttp = new XMLHttpRequest();
-
-xmlhttp.onreadystatechange = function()
+var orders = [];
+var pageNumber = 1;
+var response;
+do
 {
-	if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+	var xmlhttp = new XMLHttpRequest();
+
+	xmlhttp.onreadystatechange = function()
 	{
-		var firstResponse = JSON.parse(xmlhttp.responseText);
-		
-		var orders = firstResponse.OrderHistoryItems;
-
-		console.log(orders);
-		/*
-		while (response.HasNextPage) 
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
 		{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
-			{
-				let nextResponse = JSON.parse(xmlhttp.responseText);
-				orders.push(nextResponse.OrderHistoryItems);
-				console.log(orders);
-			}
-
-			requestBody.pageNumber++;
-			xmlhttp.send(JSON.stringify(requestBody));
+			response = JSON.parse(xmlhttp.responseText);
+			
+			orders = orders.concat(response.OrderHistoryItems);
 		}
-		*/
 	}
-}
 
-xmlhttp.open("POST", "https://www.yemeksepeti.com/Account/GetOrderHistory", true);
+	xmlhttp.open("POST", "https://www.yemeksepeti.com/Account/GetOrderHistory", false);
 
-xmlhttp.setRequestHeader("Content-Type", "application/json");
-xmlhttp.setRequestHeader("Accept", "application/json");
-xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+	xmlhttp.setRequestHeader("Content-Type", "application/json");
+	xmlhttp.setRequestHeader("Accept", "application/json");
+	xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
-var requestBody = {
-	"pageNumber": 1,
-	"archiveDbOrders": true,
-	"ysRequest": {
-		"Token": getCookie("loginToken"),
-		"CatalogName": getCookie("catalogName"),
-		"Culture": getCookie("culture"),
-		"LanguageId": "tr-TR"
-	}
-};
-xmlhttp.send(JSON.stringify(requestBody));
+	var requestBody = {
+		"pageNumber": pageNumber++,
+		"archiveDbOrders": false,	//	true?
+		"ysRequest": {
+			"Token": getCookie("loginToken"),
+			"CatalogName": getCookie("catalogName"),
+			"Culture": getCookie("culture"),
+			"LanguageId": "tr-TR"
+		}
+	};
+	xmlhttp.send(JSON.stringify(requestBody));
+} while (response.HasNextPage);
 
+var restaurantName = document.getElementsByClassName("ys-h2")[0].innerHTML;
+
+//	Filter orders from current restaurant
+orders = orders.filter(function (order) {
+	return order.RestaurantDisplayName === restaurantName;
+});
+console.log(orders);
+
+var foods = document.getElementsByClassName("getProductDetail");
+var orderItemNameMap = new Map();
+
+orders.forEach(function (order) {
+	var orderItemNames = order.OrderItemNames;
+	orderItemNames = orderItemNames.map(function(orderItemName) {
+		orderItemName = orderItemName.substring(orderItemName.indexOf(" "));
+		if (orderItemNameMap.has(orderItemName)) 
+		{
+			orderItemNameMap.set(orderItemName, orderItemNameMap.get(orderItemName)++);
+		}
+		else 
+		{
+			orderItemNameMap.set(orderItemName, 1);
+		}
+	});
+	/*
+	[].forEach.call(foods, function(food) {
+		var foodName = order.
+		if (food.innerHTML === order.)
+		{
+			food.style.color = "green";
+		}
+	});
+	*/
+});
+
+console.log(orderItemNameMap);
 
 /****************** 	UTILITY FUNCTIONS	 ********************/
 
