@@ -1,17 +1,30 @@
 {
     "name": "Yemeksepeti Puanlarım",
-    "version": "1.0",
+    "version": "1.1",
     "description": "Restoran menüsünde eski siparişlerinizde hangi yemeğe kaç puan verdiğinizi gösterir.",
     "permissions": [
+		"declarativeContent",
         "https://www.yemeksepeti.com/*"
-    ],
+	],
+	"background": {
+		"scripts": ["background.js"],
+		"persistent": false
+	},
     "content_scripts": [
         {
             "matches": ["https://www.yemeksepeti.com/*"],
             "exclude_matches": ["https://www.yemeksepeti.com/*/*"],
             "js": ["content_script.js"]
         }
-    ],
+	],
+	"page_action": {
+		"default_icon": {
+		  "16": "images/logo16.png",
+		  "32": "images/logo32.png",
+		  "48": "images/logo64.png",
+		  "128": "images/logo128.png"
+		}
+	},
     "icons": {
         "16": "images/logo16.png",
         "32": "images/logo32.png",
