@@ -1,14 +1,3 @@
-/*
-var foodLists = document.getElementsByClassName("listBody");
-
-[].forEach.call(foodLists, function(foodList) {
-	var foods = foodList.getElementsByTagName("li");
-
-	[].forEach.call(foods, function(food) {
-	food.style.backgroundColor = "red";
-	});
-});
-*/
 var orders = [];
 orders = orders.concat(getOrderHistory(false));
 orders = orders.concat(getOrderHistory(true));
@@ -19,7 +8,6 @@ var restaurantName = document.getElementsByClassName("ys-h2")[0].textContent;
 orders = orders.filter(function (order) {
 	return order.RestaurantDisplayName === restaurantName;
 });
-console.log(orders);
 
 var menu = new Array();	//	menu[orderItemName] = [points array]
 
@@ -35,7 +23,17 @@ orders.forEach(function (order) {
 				menu[orderItemName] = [];
 			}
 			
-			menu[orderItemName].push(order.OrderCommentSummary.UserComment);
+			//	user comments are stored in two different formats. if it is null, get values from somewhere else
+			let userComment = order.OrderCommentSummary.UserComment;
+			if (!userComment)
+			{
+				userComment = {
+					"Speed": order.Speed,
+					"Serving": order.Serving,
+					"Flavour": order.Flavour
+				}
+			}
+			menu[orderItemName].push(userComment);
 		});
 	}
 });
@@ -47,7 +45,6 @@ var foods = document.getElementsByClassName("getProductDetail");
 
 	if (ratings)
 	{
-		console.log(ratings);
 		let speed = 0, serving = 0, flavour = 0;
 		ratings.forEach(function (rating) {
 			speed += rating.Speed;
@@ -59,12 +56,10 @@ var foods = document.getElementsByClassName("getProductDetail");
 		speed = speed / voteCount;
 		serving = serving / voteCount;
 		flavour = flavour / voteCount;
-		food.innerHTML += "<span style='color: green;'> (Hız: " + speed + ", Servis: " + serving + ", Lezzet: " + flavour + ")("
-		 + voteCount + " oy)</span>";
+		food.innerHTML += "<span style='color: green;'> (Hız: " + speed.toFixed(2) + ", Servis: " + serving.toFixed(2) + ", Lezzet: "
+		 + flavour.toFixed(2) + ")(" + voteCount + " oy)</span>";
 	}
 });
-
-console.log(menu);
 
 /****************** 	UTILITY FUNCTIONS	 ********************/
 
