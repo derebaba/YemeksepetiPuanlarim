@@ -1,6 +1,6 @@
 {
     "name": "Yemeksepeti Puanlarım",
-    "version": "1.1",
+    "version": "1.2",
     "description": "Restoran menüsünde eski siparişlerinizde hangi yemeğe kaç puan verdiğinizi gösterir.",
     "permissions": [
 		"declarativeContent",
