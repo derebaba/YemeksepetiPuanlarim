@@ -1,67 +1,8 @@
-var orders = [];
-orders = orders.concat(getOrderHistory(false));
-orders = orders.concat(getOrderHistory(true));
+var _orders = [];
 
-var restaurantName = document.getElementsByClassName("ys-h2")[0].textContent;
+getOrderHistory(1, false);
 
-//	Filter orders from current restaurant
-orders = orders.filter(function (order) {
-	return order.RestaurantDisplayName === restaurantName;
-});
-
-var menu = new Array();	//	menu[orderItemName] = [points array]
-
-orders.forEach(function (order) {
-	if (order.RatingStatus === "Already Rated")
-	{
-		var orderItemNames = order.OrderItemNames;
-		orderItemNames = orderItemNames.map(function(orderItemName) {
-			orderItemName = orderItemName.substring(orderItemName.indexOf(" ") + 1);	//	remove number of orders
-			
-			if (!menu[orderItemName]) 
-			{
-				menu[orderItemName] = [];
-			}
-			
-			//	user comments are stored in two different formats. if it is null, get values from somewhere else
-			let userComment = order.OrderCommentSummary.UserComment;
-			if (!userComment)
-			{
-				userComment = {
-					"Speed": order.Speed,
-					"Serving": order.Serving,
-					"Flavour": order.Flavour
-				}
-			}
-			menu[orderItemName].push(userComment);
-		});
-	}
-});
-
-var foods = document.getElementsByClassName("getProductDetail");
-
-[].forEach.call(foods, function(food) {
-	let ratings = menu[food.textContent];
-
-	if (ratings)
-	{
-		let speed = 0, serving = 0, flavour = 0;
-		ratings.forEach(function (rating) {
-			speed += rating.Speed;
-			serving += rating.Serving;
-			flavour += rating.Flavour;
-		});
-		//	calculate average
-		let voteCount = ratings.length;
-		speed = speed / voteCount;
-		serving = serving / voteCount;
-		flavour = flavour / voteCount;
-		food.innerHTML += "<span style='color: green;'> (Hız: " + speed.toFixed(2) + ", Servis: " + serving.toFixed(2) + ", Lezzet: "
-		 + flavour.toFixed(2) + ")(" + voteCount + " oy)</span>";
-	}
-});
-
-/****************** 	UTILITY FUNCTIONS	 ********************/
+/******************  FUNCTIONS  ********************/
 
 // https://stackoverflow.com/a/11767598/2931806
 function getCookie(cookiename) 
@@ -72,43 +13,108 @@ function getCookie(cookiename)
 	return decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./,"") : "");
 }
 
-function getOrderHistory(archiveDbOrders)
+function getOrderHistory(pageNumber, archiveDbOrders)
 {
-	var orders = [];
-	var pageNumber = 1;
-	var response;
-	do
+	var xmlhttp = new XMLHttpRequest();
+	
+	xmlhttp.onreadystatechange = function()
 	{
-		var xmlhttp = new XMLHttpRequest();
-
-		xmlhttp.onreadystatechange = function()
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
 		{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+			response = JSON.parse(xmlhttp.responseText);
+			
+			//	concatenate result to global orders array
+			_orders = _orders.concat(response.OrderHistoryItems);
+			
+			if (response.HasNextPage)
 			{
-				response = JSON.parse(xmlhttp.responseText);
-				
-				orders = orders.concat(response.OrderHistoryItems);
+				getOrderHistory(pageNumber + 1, archiveDbOrders);
+			}
+			else if (!archiveDbOrders)
+			{
+				//	non-archiveDbOrders are finished, collect archiveDbOrders
+				getOrderHistory(1, true);
+			}
+			else
+			{
+				//	all orders are collected
+				var restaurantName = document.getElementsByClassName("ys-h2")[0].textContent;
+
+				//	Filter orders from current restaurant
+				_orders = _orders.filter(function (order) {
+					return order.RestaurantDisplayName === restaurantName;
+				});
+
+				var menu = new Array();	//	menu[orderItemName] = [points array]
+
+				_orders.forEach(function (order) {
+					if (order.RatingStatus === "Already Rated")
+					{
+						var orderItemNames = order.OrderItemNames;
+						orderItemNames = orderItemNames.map(function(orderItemName) {
+							orderItemName = orderItemName.substring(orderItemName.indexOf(" ") + 1);	//	remove number of orders
+							
+							if (!menu[orderItemName]) 
+							{
+								menu[orderItemName] = [];
+							}
+							
+							//	user comments are stored in two different formats. if it is null, get values from somewhere else
+							let userComment = order.OrderCommentSummary.UserComment;
+							if (!userComment)
+							{
+								userComment = {
+									"Speed": order.Speed,
+									"Serving": order.Serving,
+									"Flavour": order.Flavour
+								}
+							}
+							menu[orderItemName].push(userComment);
+						});
+					}
+				});
+
+				var foods = document.getElementsByClassName("getProductDetail");
+
+				[].forEach.call(foods, function(food) {
+					let ratings = menu[food.textContent];
+
+					if (ratings)
+					{
+						let speed = 0, serving = 0, flavour = 0;
+						ratings.forEach(function (rating) {
+							speed += rating.Speed;
+							serving += rating.Serving;
+							flavour += rating.Flavour;
+						});
+						//	calculate average
+						let voteCount = ratings.length;
+						speed = speed / voteCount;
+						serving = serving / voteCount;
+						flavour = flavour / voteCount;
+						food.innerHTML += "<span style='color: green;'> (Hız: " + speed.toFixed(2) + ", Servis: " + serving.toFixed(2) + ", Lezzet: "
+						+ flavour.toFixed(2) + ")(" + voteCount + " oy)</span>";
+					}
+				});
 			}
 		}
+	}
 
-		xmlhttp.open("POST", "https://www.yemeksepeti.com/Account/GetOrderHistory", false);
+	xmlhttp.open("POST", "https://www.yemeksepeti.com/Account/GetOrderHistory", true);
 
-		xmlhttp.setRequestHeader("Content-Type", "application/json");
-		xmlhttp.setRequestHeader("Accept", "application/json");
-		xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+	xmlhttp.setRequestHeader("Content-Type", "application/json");
+	xmlhttp.setRequestHeader("Accept", "application/json");
+	xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
-		var requestBody = {
-			"pageNumber": pageNumber++,
-			"archiveDbOrders": archiveDbOrders,
-			"ysRequest": {
-				"Token": getCookie("loginToken"),
-				"CatalogName": getCookie("catalogName"),
-				"Culture": getCookie("culture"),
-				"LanguageId": "tr-TR"
-			}
-		};
-		xmlhttp.send(JSON.stringify(requestBody));
-	} while (response.HasNextPage);
-
-	return orders;
+	var requestBody = {
+		"pageNumber": pageNumber,
+		"archiveDbOrders": archiveDbOrders,
+		"ysRequest": {
+			"Token": getCookie("loginToken"),
+			"CatalogName": getCookie("catalogName"),
+			"Culture": getCookie("culture"),
+			"LanguageId": "tr-TR"
+		}
+	};
+	xmlhttp.send(JSON.stringify(requestBody));
 }
